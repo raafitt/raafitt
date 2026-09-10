@@ -50,26 +50,42 @@ ___
 * 2020 Специалист по автоматизации, Уфимский государственный нефтяной технический университет (бакалавр)
 * 2016 Android разработчик, IT School Samsung (профессиональная переподготовка)
 
+private Ringtone currentRingtone;
+
 @ReactMethod
-public void testNotificationSound() {
+public void showAlarmNotification(String title, String message) {
     try {
+        // Баннер уведомления
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(
+                getReactApplicationContext(), "alarms_channel_v3")
+            .setContentTitle(title)
+            .setContentText(message)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true);
+
+        NotificationManagerCompat.from(getReactApplicationContext())
+            .notify((int) System.currentTimeMillis(), builder.build());
+
+        // Звук — явно, не полагаясь на канал
+        if (currentRingtone != null && currentRingtone.isPlaying()) {
+            currentRingtone.stop(); // на случай если алармы приходят часто друг за другом
+        }
+
         Uri soundUri = Uri.parse(
             "android.resource://" + getReactApplicationContext().getPackageName() + "/raw/alarm_sound"
         );
-
-        Ringtone ringtone = RingtoneManager.getRingtone(getReactApplicationContext(), soundUri);
+        currentRingtone = RingtoneManager.getRingtone(getReactApplicationContext(), soundUri);
 
         AudioAttributes audioAttributes = new AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_NOTIFICATION)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build();
-        ringtone.setAudioAttributes(audioAttributes);
+        currentRingtone.setAudioAttributes(audioAttributes);
+        currentRingtone.play();
 
-        Log.d("AlarmNotif", "Playing ringtone, isPlaying before: " + ringtone.isPlaying());
-        ringtone.play();
-        Log.d("AlarmNotif", "play() called, isPlaying after: " + ringtone.isPlaying());
     } catch (Exception e) {
-        Log.e("AlarmNotif", "Ringtone playback failed", e);
+        Log.e("AlarmNotif", "showAlarmNotification failed", e);
     }
 }
 

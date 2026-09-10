@@ -50,6 +50,27 @@ ___
 * 2020 Специалист по автоматизации, Уфимский государственный нефтяной технический университет (бакалавр)
 * 2016 Android разработчик, IT School Samsung (профессиональная переподготовка)
 
+@ReactMethod
+public void testNotificationSound() {
+    try {
+        Uri soundUri = Uri.parse(
+            "android.resource://" + getReactApplicationContext().getPackageName() + "/raw/alarm_sound"
+        );
 
+        Ringtone ringtone = RingtoneManager.getRingtone(getReactApplicationContext(), soundUri);
+
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build();
+        ringtone.setAudioAttributes(audioAttributes);
+
+        Log.d("AlarmNotif", "Playing ringtone, isPlaying before: " + ringtone.isPlaying());
+        ringtone.play();
+        Log.d("AlarmNotif", "play() called, isPlaying after: " + ringtone.isPlaying());
+    } catch (Exception e) {
+        Log.e("AlarmNotif", "Ringtone playback failed", e);
+    }
+}
 
 

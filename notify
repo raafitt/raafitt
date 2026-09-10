@@ -1,0 +1,97 @@
+private void createAlarmChannelIfNeeded() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        NotificationManager manager = (NotificationManager) getApplicationContext()
+            .getSystemService(Context.NOTIFICATION_SERVICE);
+
+        NotificationChannel existing = manager.getNotificationChannel("alarms_channel_v3");
+        if (existing != null) {
+            return; // канал уже есть — не трогаем, иначе слетит выбор пользователя
+        }
+
+        NotificationChannel alarmChannel = new NotificationChannel(
+            "alarms_channel_v3",
+            "Alarm Notifications",
+            NotificationManager.IMPORTANCE_HIGH
+        );
+
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build();
+
+        Uri defaultSoundUri = Uri.parse(
+            "android.resource://" + getApplicationContext().getPackageName() + "/raw/alarm_sound"
+        );
+        alarmChannel.setSound(defaultSoundUri, audioAttributes);
+        alarmChannel.enableVibration(true);
+
+        manager.createNotificationChannel(alarmChannel);
+    }
+}private void createAlarmChannelIfNeeded() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        NotificationManager manager = (NotificationManager) getApplicationContext()
+            .getSystemService(Context.NOTIFICATION_SERVICE);
+
+        NotificationChannel existing = manager.getNotificationChannel("alarms_channel_v3");
+        if (existing != null) {
+            return; // канал уже есть — не трогаем, иначе слетит выбор пользователя
+        }
+
+        NotificationChannel alarmChannel = new NotificationChannel(
+            "alarms_channel_v3",
+            "Alarm Notifications",
+            NotificationManager.IMPORTANCE_HIGH
+        );
+
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build();
+
+        Uri defaultSoundUri = Uri.parse(
+            "android.resource://" + getApplicationContext().getPackageName() + "/raw/alarm_sound"
+        );
+        alarmChannel.setSound(defaultSoundUri, audioAttributes);
+        alarmChannel.enableVibration(true);
+
+        manager.createNotificationChannel(alarmChannel);
+    }
+}
+
+@ReactMethod
+public void showAlarmNotification(String title, String message) {
+    try {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(
+                getReactApplicationContext(), "alarms_channel_v3")
+            .setContentTitle(title)
+            .setContentText(message)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true);
+
+        NotificationManagerCompat.from(getReactApplicationContext())
+            .notify((int) System.currentTimeMillis(), builder.build());
+
+        if (currentRingtone != null && currentRingtone.isPlaying()) {
+            currentRingtone.stop();
+        }
+
+        NotificationManager manager = (NotificationManager) getReactApplicationContext()
+            .getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationChannel channel = manager.getNotificationChannel("alarms_channel_v3");
+        Uri soundUri = (channel != null) ? channel.getSound() : null;
+
+        if (soundUri != null) {
+            currentRingtone = RingtoneManager.getRingtone(getReactApplicationContext(), soundUri);
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build();
+            currentRingtone.setAudioAttributes(audioAttributes);
+            currentRingtone.play();
+        }
+        // если soundUri == null — пользователь явно выбрал "Без звука" в системных настройках, уважаем это молча
+    } catch (Exception e) {
+        Log.e("AlarmNotif", "showAlarmNotification failed", e);
+    }
+}
